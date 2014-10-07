@@ -1,4 +1,4 @@
-var http = require("http");
+var request = require("request");
 var util = require("util");
 
 function Wufoo(subdomain, apiKey){
@@ -6,32 +6,53 @@ function Wufoo(subdomain, apiKey){
 	this.apiKey = apiKey;
 }
 
-Wufoo.prototype.getForms = function(){
+//Returns a JSON containing an array of Forms in JSON format
+Wufoo.prototype.getForms = function(callback){
 	var resource = "forms";
 	var format = ".json";
 	var reqMethod = "GET";
-	var reqAuth = ""+this.apiKey + ":footastic";
-
+	console.log("GET "+"https://"+this.subdomain+".wufoo.com/api/v3/"+resource+format);
 	var options = {
-		hostname: ""+this.subdomain+".wufoo.com",
-		path:     "/api/v3"+resource+format,
+		uri: "https://"+this.subdomain+".wufoo.com/api/v3/"+resource+format,
 		method: reqMethod,
-		auth: reqAuth
+		json: true,
+		auth: {
+			user: this.apiKey,
+			pass: "footastic"
+		}
 	};
 
-	var callback = function(response){
-		return response;
-	};
-
-	var req = http.request(options, callback);
-
-	req.on('error', function(e){
-		console.log('Error '+ e.message);
-		console.log(e);
+	request(options, function(error, response, body){
+		if (!error && response.statusCode === 200){
+			callback(body);
+		}
+		else{
+			console.log("CODE "+response.statusCode);
+			console.log("ERROR "+error);
+		}
 	});
 };
 
-var wufoo = new Wufoo("fishbowl",  "AOI6-LFKL-VM1Q-IEX9");
-var forms = wufoo.getForms();
+//Take a JSON Wufoo form and ouput a pretty version
+Wufoo.prototype.parseForm = function(form){
+	console.log("Name: "+ form.Name);
+	console.log("Hash: "+ form.Hash);
+	console.log("Fields: "+ form.LinkFields);
+};
 
-console.log(forms);
+//Take an array of forms, and output pretty version
+Wufoo.prototype.parseForms = function(forms){
+	for (var i = 0; i < forms.length; i++) {
+		this.parseForm(forms[i]);
+		console.log();
+	}
+};
+
+
+var wufoo = new Wufoo("fishbowl",  "AOI6-LFKL-VM1Q-IEX9");
+wufoo.getForms(function(forms){
+	console.log();
+	wufoo.parseForms(forms.Forms);
+});
+
+
