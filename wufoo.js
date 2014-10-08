@@ -6,12 +6,12 @@ function Wufoo(subdomain, apiKey){
 	this.apiKey = apiKey;
 }
 
-//Returns a JSON containing an array of Forms in JSON format
+//Pass a JSON containing an array of Forms in JSON format to the callback argument
 Wufoo.prototype.getForms = function(callback){
 	var resource = "forms";
 	var format = ".json";
 	var reqMethod = "GET";
-	console.log("GET "+"https://"+this.subdomain+".wufoo.com/api/v3/"+resource+format);
+	
 	var options = {
 		uri: "https://"+this.subdomain+".wufoo.com/api/v3/"+resource+format,
 		method: reqMethod,
@@ -21,6 +21,47 @@ Wufoo.prototype.getForms = function(callback){
 			pass: "footastic"
 		}
 	};
+
+	console.log("GET "+"https://"+this.subdomain+".wufoo.com/api/v3/"+resource+format);
+
+	request(options, function(error, response, body){
+		if (!error && response.statusCode === 200){
+			callback(body);
+		}
+		else{
+			console.log("CODE "+response.statusCode);
+			console.log("ERROR "+error);
+		}
+	});
+};
+
+//Pass a JSON containing an array of Fields in JSON format from the formID to the callback argument
+//Passing true for "pretty" will break parsing, so should be avoided
+Wufoo.prototype.getFields = function(formID, pretty, system, callback){
+	var resource = "forms/"+formID+"/fields";
+	var format = ".json";
+	if( (pretty || system) ){
+		format += "?";
+		if( pretty ){
+			format += "pretty=true";
+		}
+		if( system ){
+			format += "system=true";
+		}
+	}
+	var reqMethod = "GET";
+	
+	var options = {
+		uri: "https://"+this.subdomain+".wufoo.com/api/v3/"+resource+format,
+		method: reqMethod,
+		json: true,
+		auth: {
+			user: this.apiKey,
+			pass: "footastic"
+		}
+	};
+
+	console.log("GET "+"https://"+this.subdomain+".wufoo.com/api/v3/"+resource+format);
 
 	request(options, function(error, response, body){
 		if (!error && response.statusCode === 200){
@@ -48,11 +89,35 @@ Wufoo.prototype.parseForms = function(forms){
 	}
 };
 
+//Take a JSON Wufoo field and ouput a pretty version
+Wufoo.prototype.parseField = function(field){
+	console.log("Title: "+ field.Title);
+	console.log("ID: "+ field.ID);
+	console.log("Type: "+ field.Type);
+};
+
+//Take an array of fields, and output pretty version
+Wufoo.prototype.parseFields = function(fields){
+	for (var i = 0; i < fields.length; i++) {
+		this.parseField(fields[i]);
+		console.log();
+	}
+};
+
 
 var wufoo = new Wufoo("fishbowl",  "AOI6-LFKL-VM1Q-IEX9");
+console.log("Getting forms");
 wufoo.getForms(function(forms){
-	console.log();
-	wufoo.parseForms(forms.Forms);
+	//console.log("Parsing Forms");
+	//wufoo.parseForms(forms.Forms);
+	var form = forms.Forms[0];
+
+	var formID = form.Hash;
+	console.log("Getting fields from form "+formID);
+	wufoo.getFields(formID, false, true, function(fields){
+		//console.log(fields);
+		wufoo.parseFields(fields.Fields);
+	});
 });
 
 
