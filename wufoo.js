@@ -1,5 +1,6 @@
 var request = require("request");
 var util = require("util");
+var fs = require('fs');
 
 function Wufoo(subdomain, apiKey){
 	this.subdomain = subdomain;
@@ -25,7 +26,7 @@ Wufoo.prototype.buildOptions = function(verb, resource){
 };
 
 Wufoo.prototype.request = function(options, callback){
-		request(options, function(error, response, body){
+	request(options, function(error, response, body){
 		if (!error && response.statusCode === 200){
 			callback(body);
 		}
@@ -97,6 +98,39 @@ Wufoo.prototype.getEntriesForm = function(formID, pretty, callback){
 	this.request(options, callback);
 };
 
+Wufoo.prototype.getFormURL = function(formID, defaultValues){
+	var url =  "https://"+this.subdomain+".wufoo.com/forms/"+formID;
+	if(defaultValues){
+		url += "/def/"+defaultValues;
+	}
+	return url;
+};
+
+//Given a form ID and an entryID, return a URL that will recreate the entry in a new form
+Wufoo.prototype.refillEntry = function(formID, entryID, callback){
+	var that = this;
+	this.getEntriesForm(formID, false, function(entries){
+		var entry;
+
+		for (var i = 0; i < entries.Entries.length; i++) {
+			if(entries.Entries[i].EntryId == entryID){
+				entry = entries.Entries[i];
+			}
+		}
+
+		var defaultValues = "";
+		for (var property in entry) {
+			if(property.indexOf("Field") > -1){
+				defaultValues += property+"="+encodeURIComponent(entry[property])+"&";
+			}
+		}
+		//Remove the last &
+		defaultValues = defaultValues.slice(0, -1);
+
+		callback(that.getFormURL(formID, defaultValues));
+	});
+};
+
 //Take a JSON Wufoo form and ouput a pretty version
 Wufoo.prototype.parseForm = function(form){
 	console.log("Name: "+ form.Name);
@@ -147,25 +181,37 @@ Wufoo.prototype.parseEntries = function(entries){
 };
 
 
-var wufoo = new Wufoo("fishbowl",  "AOI6-LFKL-VM1Q-IEX9");
-console.log("Getting forms");
-wufoo.getForms(function(forms){
-	//console.log("Parsing Forms");
-	//wufoo.parseForms(forms.Forms);
-	var form = forms.Forms[0];
 
-	var formID = form.Hash;
-	console.log("Getting fields from form "+formID);
-	wufoo.getFields(formID, false, true, function(fields){
-		//console.log(fields);
-		//wufoo.parseFields(fields.Fields);
-	});
 
-	console.log("Getting entries from form "+formID);
-	wufoo.getEntriesForm(formID, false, function(entries){
-		//console.log(entries);
-		wufoo.parseEntries(entries.Entries);
-	});
-});
+// var wufoo = new Wufoo("fishbowl",  "AOI6-LFKL-VM1Q-IEX9");
+// console.log("Getting forms");
+// wufoo.getForms(function(forms){
+//  //console.log("Parsing Forms");
+//  //wufoo.parseForms(forms.Forms);
+//  var form = forms.Forms[0];
+
+//  var formID = form.Hash;
+//  console.log("Getting fields from form "+formID);
+//  wufoo.getFields(formID, false, true, function(fields){
+//      //console.log(fields);
+//      //wufoo.parseFields(fields.Fields);
+//  });
+
+//  console.log("Getting entries from form "+formID);
+//  wufoo.getEntriesForm(formID, false, function(entries){
+//      //console.log(entries);
+//      //wufoo.parseEntries(entries.Entries);
+//  });
+//  console.log("Building URL");
+//  wufoo.refillEntry(formID, 1, function(url){
+//      fs.writeFile("./test.txt", url, function(err) {
+//          if(err) {
+//              console.log(err);
+//          } else {
+//              console.log("The file was saved!");
+//          }
+//      });
+//  });
+// });
 
 
