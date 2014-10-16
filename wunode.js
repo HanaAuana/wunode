@@ -109,6 +109,7 @@ Wufoo.prototype.getFormURL = function(formID, defaultValues){
 //Given a form ID and an entryID, return a URL that will recreate the entry in a new form
 Wufoo.prototype.refillEntry = function(formID, entryID, callback){
 	var that = this;
+	//console.log("Refilling entry "+entryID+" from form "+formID);
 	this.getEntriesForm(formID, false, function(entries){
 		var entry;
 
@@ -215,3 +216,4 @@ Wufoo.prototype.parseEntries = function(entries){
 // });
 
 
+module.exports = new Wufoo("fishbowl",  "AOI6-LFKL-VM1Q-IEX9");
