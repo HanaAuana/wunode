@@ -181,10 +181,18 @@ Wufoo.prototype.parseEntries = function(entries){
 	}
 };
 
+//Given a URL for a form, get the form hash or form name for idrntifying the correct form
+Wufoo.prototype.parseFormURL = function(formURL){
+	var start = formURL.indexOf("/forms/");
+	console.log(formURL.substring(start+7, formURL.length-1));
+	return formURL.substring(start, -1);
+};
+
 
 
 
 // var wufoo = new Wufoo("fishbowl",  "AOI6-LFKL-VM1Q-IEX9");
+// wufoo.parseFormURL("https://fishbowl.wufoo.com/forms/amazon-mechanical-turk/");
 // console.log("Getting forms");
 // wufoo.getForms(function(forms){
 //  //console.log("Parsing Forms");
